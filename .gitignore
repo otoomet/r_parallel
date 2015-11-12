@@ -9,6 +9,7 @@
 
 # RStudio files
 .Rproj.user/
+auto/
 
 # produced vignettes
 vignettes/*.html
@@ -21,3 +22,4 @@ vignettes/*.pdf
 *.snm
 *.toc
 *.out
+*.vrb

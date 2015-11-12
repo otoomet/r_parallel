@@ -34,6 +34,19 @@
   \tableofcontents
 \end{frame}
 
+\begin{frame}
+  \frametitle{Results Table}
+  \begin{tabular}{l cccc}
+    \toprule
+    task      & single thread & multicore & socket (localhost) & ... \\
+    \midrule
+    $10^{7}$  & time in s     & ...       & ...                & ...\\
+    $10^{5}$  & ...           & ...       & ...                & ...\\
+    \bottomrule
+  \end{tabular}
+  
+\end{frame}
+
 \section{Background}
 
 \begin{frame}
@@ -64,6 +77,9 @@
   \item R-Studio
   \item ESS (Emacs)
   \item \code{R CMD Batch}
+    \begin{itemize}
+    \item loads/saves workspace
+    \end{itemize}
   \item \code{Rscript}
     \begin{itemize}
     \item Less bloated version of \code{R CMD BATCH}
@@ -84,6 +100,7 @@
     \item Fast
     \item Cheap
     \end{itemize}
+  \item \code{mclapply()}
   \item Let's use it!
   \item Example: 33 vs 75 seconds on my laptop (4 workers)
     \pause
@@ -91,6 +108,35 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Example 1}
+  \begin{itemize}
+  \item Embarrasingly parallel task
+  \item Compute normal density of a long vector
+  \item Find maximum
+  \item How many threads to run?
+    \begin{itemize}
+    \item \code{detectCores()}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Single Core vs Multicore }
+  Example on 8-core processor: 
+\begin{lstlisting}
+> x <- DGP(N)
+> system.time(search1(nGrid=10))
+Maximum -21427517 at mu = 0.5555556 and sigma = 2.222778 
+   user  system elapsed 
+158.041   2.590 160.717 
+> system.time(search2(nGrid=10))
+Maximum -21427517 at mu = 0.5555556 and sigma = 2.222778 
+   user  system elapsed 
+138.377   3.505  21.192 
+\end{lstlisting}
+  
+\end{frame}
 
 \subsection{Socket}
 
@@ -102,7 +148,8 @@
     \item including on ``localhost''
     \end{itemize}
   \item Access these over internet
-  \item Allows to use different computers
+  \item Allows to use multiple computers
+  \item \code{makePSOCKcluster()}
   \item Example: 50 vs 75 seconds on my laptop (2 workers)
   \item Example with 2 computers: 23 vs 75 seconds
     \pause
@@ -112,6 +159,7 @@
     \item \emph{top} shows the workers only partly (30\%) busy with
       small vectors
     \end{itemize}
+  \item Need password-less ssh connection
   \end{itemize}
 \end{frame}
 
@@ -159,11 +207,38 @@
   \begin{itemize}
   \item Run the same code on different (chunks of) data
   \item \code{pbdMPI} library
-  \item Works well with a cluster and \emph{mpirun}
+  \item Works well with a HPC and \emph{mpirun}
   \item Can be used with distributed data (big data)
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Example 1}
+  Two processes execute the same code
+  \begin{itemize}
+  \item both generate different random numbers
+  \item both print
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Example 2}
+  Only master generates data
+  \begin{itemize}
+  \item Master shares data with all workers
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Example 3}
+  Gridsearch example
+  \begin{itemize}
+  \item Master generates data
+  \item Shares it to workers
+  \item Workers calculate their share
+  \item Master performs the final analysis
+  \end{itemize}
+\end{frame}
 
 \begin{frame}
   \frametitle{Data Parallel}
@@ -183,192 +258,25 @@
   \end{tabular}
 \end{frame}
 
-
-\section{Indekseerimine}
+\section[HPC]{High-Performance Cluster}
 
 \begin{frame}
-  \frametitle{Indekseerimine}
-  Kuidas vektori/maatriksi vajalikku elementi näperdada
+  \frametitle{High-Performance Cluster}
+  UW hyak:
   \begin{itemize}
-  \item \code{length()} -- vektori pikkus
-  \item \code{dim()} -- maatriksi mõõtmed
-    \pause
-  \item Erinevad indeksi tüübid:
+  \item 20,000 cpu cores
+  \item 100TB memory
+  \item MOAB cluster software
+  \item TORQUE scheduler
+  \item use \emph{pbs scripts}
     \begin{itemize}
-    \item Täisarvud: \code{v[c(1,2,5)]}
-    \item Negatiivsed täisarvud: \code{v[-1]}
-    \item Loogiline indeks: \code{v[c(T, F, T)]}
-    \item Komponentide nimed: \code{v[c("beta", "gamma")]}
-    \item Kõik komponendid: \code{v[]}
+    \item Tell the scheduler how much resources you want \dots
+    \item \dots and run your stuff \smiley
     \end{itemize}
-    \pause
-  \item Vajalikele elementidele omistamine:\\
-    \code{v[v < 0] <- 0}
-  \item Andmebaasist selekteerimine:\\
-    \code{data[data\$income > 0,]}
+  \item submit the jobs by \emph{qsub}
   \end{itemize}
 \end{frame}
 
 
-
-\section{Arvutamine}
-
-\begin{frame}
-  \frametitle{Arvutamine}
-  \begin{itemize}
-  \item Põhilised matemaatilised operatsioonid: \code{+}, $-$, $*$, $/$
-  \item Loogikatehted \code{!}, \code{\&}, \code{|}, \code{==},
-    \code{<}, \code{<=}, \code{\%in\%}, \dots
-  \item Täisarvuline jagamine \textbackslash{}, jääk \code{\%\%}
-  \item Maatrikskorrutis \code{\%*\%}
-  \item Transponeerimine \code{t()}
-    \pause
-  \item Igasugu (vektor)funktsioonid: \code{log()}, \code{sqrt()},
-    \code{exp()}, \dots
-  \item Vektorite operatsioonid: \emph{recycling}
-    \pause
-  \item Numbriline optimeerimine: \code{nlm()}, \code{optim()}
-  \item Numbriline võrrandite lahendamine: \code{uniroot()}
-  \item Numbriline integraal: \code{area()}
-  \item \code{options(digits=)}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Näide}
-  \begin{itemize}
-  \item Laadi \code{http://www.obs.ee/\textasciitilde{}siim/ETU95.csv}
-  \item Selekteeri vajalikud muutujad
-  \item Arvuta vajalikud lähtesuurused
-  \item Salvesta vahetulemused
-  \end{itemize}
-  \pause
-  Väljavõte ETU1995 andmebaasist
-  \begin{description}
-  \item[C18E0000] bruttopalk 1994 sügisel, EEK
-  \item[G21] haridus: 1,2 -- alg, 3,4 -- kesk; 5-7 -- kõrg
-  \item[H01] perekonnaseis: 2,3 -- (vaba)abielu
-  \item[I01EKOOD] elukoha kood: 1 -- Tallinn
-  \item[J01] kas töötab uuringunädalal: 1 -- jah, 2 -- ei
-  \item[L02A00] sünniaasta (kahekohaline)
-  \item[L02D00] sugu: 1 -- mees, 2 -- naine
-  \end{description}
-\end{frame}
-
-\section{Funktsioon}
-
-\begin{frame}
-  \frametitle{Funktsioonid}
-  \begin{itemize}
-  \item Interaktiivne käivitamine
-  \item Argumendid
-  \item Tulemused
-    \pause
-  \item Kontrollstruktuurid:
-    \begin{itemize}
-    \item \code{for()}
-    \item \code{break}
-    \item \code{if()}
-    \item \code{else}
-    \end{itemize}
-    \pause
-  \item Trükkimine: \code{cat()}
-  \item Silumine: \code{browser()}, \code{traceback()}
-  \item Meetodid
-  \end{itemize}
-\end{frame}
-
-
-
-\section{Statistika}
-
-\begin{frame}
-  \frametitle{Statistilised mudelid}
-  \begin{itemize}
-  \item OLS -- \emph{linear model}
-    \begin{align*}
-      &\text{\texttt{> model <- lm(response \textasciitilde{} explanatory + variables)}}\\
-      &\text{\texttt{> summary(model)}}
-    \end{align*}
-    \pause
-  \item Logit/probit: osa üldistatud lineaarsetest mudelitest
-    \emph{generalised linear models}:
-    \begin{align*}
-      &\text{\texttt{> model <- lm(response \textasciitilde{} explanatory + variables,}}\\
-      &\text{\texttt{family=binomial(link="logit"))}}\\
-      &\text{\texttt{> summary(model)}}
-    \end{align*}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Juhuslikud arvud}
-  \begin{itemize}
-  \item Jaotused:
-    \begin{description}
-    \item[\code{.unif}] ühtlane jaotus
-    \item[\code{.norm}] normaaljaotus
-    \item[\code{.exp}] eksponentjaotus
-    \item[\code{.chisq}] $\chi^2$-jaotus
-    \item[\code{.t}] $t$-jaotus
-    \item[\code{.binom}] binoomjaotus
-    \item[\code{.pois}] Poissoni jaotus
-    \item \dots
-    \end{description}
-    \pause
-  \item Statistilised tabelid:
-    \begin{description}
-    \item[\code{r\dots}] juhuslike arvude generaator (\code{rnorm})
-    \item[\code{d\dots}] tõenäosustihedus (\code{dnorm})
-    \item[\code{p\dots}] kumulatiivne jaotusfunktsioon (\code{pnorm})
-    \item[\code{q\dots}] jaotuse kvantiilid (\code{qnorm})
-    \end{description}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Maximum likelihood}
-  ML tuleb teha nagu alati:
-  \begin{enumerate}
-  \item Kirjuta likelihoodi funktsioon
-  \item Maksimeeri parameetri järgi.
-  \end{enumerate}
-  Näide: genereerime normaaljaotusega juhuslikke arve ja leiame valimi
-  keskmise:
-  \begin{align}
-    \loglik_i(\mu, \sigma; x_i) 
-    &=
-    \log \left(
-      \frac{1}{\sqrt{2\pi}\sigma}
-      \exp \left(
-        - \frac{1}{2}
-        \frac{(x_i - \mu)^2}{\sigma^2}
-      \right)
-    \right) =
-    \\
-    &=
-    -\frac{1}{2} \log(2\pi)
-    - \log \sigma
-    - \frac{1}{2}
-    \frac{(x_i - \mu)^2}{\sigma^2}
-  \end{align}
-\end{frame}
-
-
-
-\section{Graafika}
-
-\begin{frame}
-  \frametitle{Graafika}
-  \begin{itemize}
-  \item Mõned näited
-  \item Lihtne rida: \code{plot(x)}
-  \item $x-y$ plot: \code{plot(x, y)}
-  \item Histogramm: \code{hist(x)}
-  \item Kernel tõenäosustihedus: \code{plot(density(x))}
-  \item Võrdle jaotuse kvantiile: \code{qqnorm()}
-  \item Funktsiooni kõver: \code{curve()}
-  \end{itemize}
-\end{frame}
 
 \end{document}

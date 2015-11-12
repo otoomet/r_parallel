@@ -75,8 +75,8 @@ search3 <- function(mulim=c(-5,5),
    grid <- as.matrix(expand.grid(mu=mus, sigma=sigmas))
    points <- seq(length=nrow(grid))
    ## -------------------------------------------------
-   cl <- makePSOCKcluster(c("localhost", "localhost"),
-                          outfile="cluster_log")
+   cl <- makePSOCKcluster(c("localhost", "localhost", "localhost", "localhost"),
+                          outfile="cluster_log.txt")
    on.exit(stopCluster(cl), add=TRUE)
    print(cl)
    ##
@@ -106,7 +106,7 @@ search4 <- function(mulim=c(-5,5),
    points <- seq(length=nrow(grid))
    ## -------------------------------------------------
    cl <- makePSOCKcluster(c("localhost", "localhost", "localhost", "localhost"),
-                          outfile="cluster_log")
+                          outfile="cluster_log.txt")
    on.exit(stopCluster(cl), add=TRUE)
    print(cl)
    clusterExport(cl, c("x", "loglik"))
@@ -180,7 +180,7 @@ search6 <- function(mulim=c(-5,5),
    print(length(cl))
    clusterExport(cl, c("x", "loglik"))
    ##
-   res <- clusterApplyLB(cl, points, function(i) loglik(grid[i,]))
+   res <- clusterApply(cl, points, function(i) loglik(grid[i,]))
    ## --------------------------------------------------
    res <- matrix(unlist(res), nGrid, nGrid)
    dimnames(res) <- list(mu=formatC(mus, format="f", digits=4, width=7),
