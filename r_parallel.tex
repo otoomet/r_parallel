@@ -1,0 +1,374 @@
+% -*- mode: LaTeX; mode: flyspell; mode: Tex-Pdf -*-
+\documentclass[pdftex]{beamer}
+\DeclareGraphicsRule{&star}{mps}{&star}{}
+\mode<presentation>
+{
+  \usetheme{Hannover}
+  \setbeamercovered{transparent}
+}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{array,xspace,icomma}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{wasysym}
+\input{isomath.tex}
+
+\title[parallel R]{R in Parallel:\\
+  From Laptop to Supercomputer}
+\author{Ott Toomet}
+\date{Seattle, Nov 14th, 2015}
+
+\newcommand{\R}{\textsf{R}\xspace}
+\lstset{language=R, extendedchars=true, stepnumber=2, breaklines=true,
+  numberstyle=\scriptsize}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{Outline}
+  \tableofcontents
+\end{frame}
+
+\section{Background}
+
+\begin{frame}
+  \frametitle{\R}
+  What is \R
+  \begin{itemize}
+  \item Tiobe top-20 programming language
+  \item One of the most popular language for data analysis and statistics
+  \item Superb graphics
+    \pause
+  \item[*] No built-in thread/parallel programming support
+  \item[*] \code{parallel}-package for explicit (coarse) parallelism
+    \begin{itemize}
+    \item You explicitly call parallel code
+    \end{itemize}
+  \item[*] revolution R for implicit (fine) parallelism
+    \begin{itemize}
+    \item The software parallelizes standard constructions
+      automatically
+    \item Uses parallel libraries like \emph{ScaLAPACK}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Frontends}
+  \begin{itemize}
+  \item R-Studio
+  \item ESS (Emacs)
+  \item \code{R CMD Batch}
+  \item \code{Rscript}
+    \begin{itemize}
+    \item Less bloated version of \code{R CMD BATCH}
+    \item Does not load/save workspace (see below)
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Clusters}
+\subsection{Multicore}
+
+\begin{frame}
+  \frametitle{Multicore Parallelism}
+  \begin{itemize}
+  \item Almost all computers nowadays use multicore processors.
+    \begin{itemize}
+    \item Shared memory
+    \item Fast
+    \item Cheap
+    \end{itemize}
+  \item Let's use it!
+  \item Example: 33 vs 75 seconds on my laptop (4 workers)
+    \pause
+  \item But it does not work on windows \frownie{}
+  \end{itemize}
+\end{frame}
+
+
+\subsection{Socket}
+
+\begin{frame}
+  \frametitle{Socket Clusters}
+  \begin{itemize}
+  \item open new workers on different computers
+    \begin{itemize}
+    \item including on ``localhost''
+    \end{itemize}
+  \item Access these over internet
+  \item Allows to use different computers
+  \item Example: 50 vs 75 seconds on my laptop (2 workers)
+  \item Example with 2 computers: 23 vs 75 seconds
+    \pause
+  \item Have to export data
+  \item Communication slow
+    \begin{itemize}
+    \item \emph{top} shows the workers only partly (30\%) busy with
+      small vectors
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Conclusion So Far}
+  Time in seconds
+  \begin{itemize}
+  \item length $10^{7} \Rightarrow$ grid $10\times10$
+  \item length $10^{5} \Rightarrow$ grid $100\times100$
+  \end{itemize}
+  \begin{tabular}{l cccc}
+    \toprule
+    size      & single thread & multicore & socket (localhost) & 2 hosts\\
+    \midrule
+    $10^{7}$  & 75            & 33        & 35                 & 23\\
+    $10^{5}$  & 74            & 33        & 121                & 30\\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+
+
+\subsection{MPI}
+
+\begin{frame}
+  \frametitle{MPI Cluster}
+  \begin{itemize}
+  \item length $10^{7} \Rightarrow$ grid $10\times10$
+  \item length $10^{5} \Rightarrow$ grid $100\times100$
+  \end{itemize}
+  \begin{tabular}{l cccc}
+    \toprule
+    size      & single thread & multicore & MPI & 2 hosts\\
+    \midrule
+    $10^{7}$  & 75            & 33        & 49                 & 23\\
+    $10^{5}$  & 74            & 33        & 353                & 30\\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\section{Data Parallelism}
+
+\begin{frame}
+  \frametitle{Data Parallelism}
+  \begin{itemize}
+  \item Run the same code on different (chunks of) data
+  \item \code{pbdMPI} library
+  \item Works well with a cluster and \emph{mpirun}
+  \item Can be used with distributed data (big data)
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Data Parallel}
+  \begin{itemize}
+  \item length $10^{7} \Rightarrow$ grid $10\times10$
+  \item length $10^{5} \Rightarrow$ grid $100\times100$
+  \item hyak:  $10^{7} \Rightarrow$ grid $100\times100$, 32 CPUs
+  \end{itemize}
+  \begin{tabular}{l cccc}
+    \toprule
+    size      & single thread & multicore & pbdMPI\\
+    \midrule
+    $10^{7}$  & 75            & 33        & 48     \\
+    $10^{5}$  & 74            & 33        & 46    \\
+    hyak      &               &           & 244 \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+
+\section{Indekseerimine}
+
+\begin{frame}
+  \frametitle{Indekseerimine}
+  Kuidas vektori/maatriksi vajalikku elementi näperdada
+  \begin{itemize}
+  \item \code{length()} -- vektori pikkus
+  \item \code{dim()} -- maatriksi mõõtmed
+    \pause
+  \item Erinevad indeksi tüübid:
+    \begin{itemize}
+    \item Täisarvud: \code{v[c(1,2,5)]}
+    \item Negatiivsed täisarvud: \code{v[-1]}
+    \item Loogiline indeks: \code{v[c(T, F, T)]}
+    \item Komponentide nimed: \code{v[c("beta", "gamma")]}
+    \item Kõik komponendid: \code{v[]}
+    \end{itemize}
+    \pause
+  \item Vajalikele elementidele omistamine:\\
+    \code{v[v < 0] <- 0}
+  \item Andmebaasist selekteerimine:\\
+    \code{data[data\$income > 0,]}
+  \end{itemize}
+\end{frame}
+
+
+
+\section{Arvutamine}
+
+\begin{frame}
+  \frametitle{Arvutamine}
+  \begin{itemize}
+  \item Põhilised matemaatilised operatsioonid: \code{+}, $-$, $*$, $/$
+  \item Loogikatehted \code{!}, \code{\&}, \code{|}, \code{==},
+    \code{<}, \code{<=}, \code{\%in\%}, \dots
+  \item Täisarvuline jagamine \textbackslash{}, jääk \code{\%\%}
+  \item Maatrikskorrutis \code{\%*\%}
+  \item Transponeerimine \code{t()}
+    \pause
+  \item Igasugu (vektor)funktsioonid: \code{log()}, \code{sqrt()},
+    \code{exp()}, \dots
+  \item Vektorite operatsioonid: \emph{recycling}
+    \pause
+  \item Numbriline optimeerimine: \code{nlm()}, \code{optim()}
+  \item Numbriline võrrandite lahendamine: \code{uniroot()}
+  \item Numbriline integraal: \code{area()}
+  \item \code{options(digits=)}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Näide}
+  \begin{itemize}
+  \item Laadi \code{http://www.obs.ee/\textasciitilde{}siim/ETU95.csv}
+  \item Selekteeri vajalikud muutujad
+  \item Arvuta vajalikud lähtesuurused
+  \item Salvesta vahetulemused
+  \end{itemize}
+  \pause
+  Väljavõte ETU1995 andmebaasist
+  \begin{description}
+  \item[C18E0000] bruttopalk 1994 sügisel, EEK
+  \item[G21] haridus: 1,2 -- alg, 3,4 -- kesk; 5-7 -- kõrg
+  \item[H01] perekonnaseis: 2,3 -- (vaba)abielu
+  \item[I01EKOOD] elukoha kood: 1 -- Tallinn
+  \item[J01] kas töötab uuringunädalal: 1 -- jah, 2 -- ei
+  \item[L02A00] sünniaasta (kahekohaline)
+  \item[L02D00] sugu: 1 -- mees, 2 -- naine
+  \end{description}
+\end{frame}
+
+\section{Funktsioon}
+
+\begin{frame}
+  \frametitle{Funktsioonid}
+  \begin{itemize}
+  \item Interaktiivne käivitamine
+  \item Argumendid
+  \item Tulemused
+    \pause
+  \item Kontrollstruktuurid:
+    \begin{itemize}
+    \item \code{for()}
+    \item \code{break}
+    \item \code{if()}
+    \item \code{else}
+    \end{itemize}
+    \pause
+  \item Trükkimine: \code{cat()}
+  \item Silumine: \code{browser()}, \code{traceback()}
+  \item Meetodid
+  \end{itemize}
+\end{frame}
+
+
+
+\section{Statistika}
+
+\begin{frame}
+  \frametitle{Statistilised mudelid}
+  \begin{itemize}
+  \item OLS -- \emph{linear model}
+    \begin{align*}
+      &\text{\texttt{> model <- lm(response \textasciitilde{} explanatory + variables)}}\\
+      &\text{\texttt{> summary(model)}}
+    \end{align*}
+    \pause
+  \item Logit/probit: osa üldistatud lineaarsetest mudelitest
+    \emph{generalised linear models}:
+    \begin{align*}
+      &\text{\texttt{> model <- lm(response \textasciitilde{} explanatory + variables,}}\\
+      &\text{\texttt{family=binomial(link="logit"))}}\\
+      &\text{\texttt{> summary(model)}}
+    \end{align*}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Juhuslikud arvud}
+  \begin{itemize}
+  \item Jaotused:
+    \begin{description}
+    \item[\code{.unif}] ühtlane jaotus
+    \item[\code{.norm}] normaaljaotus
+    \item[\code{.exp}] eksponentjaotus
+    \item[\code{.chisq}] $\chi^2$-jaotus
+    \item[\code{.t}] $t$-jaotus
+    \item[\code{.binom}] binoomjaotus
+    \item[\code{.pois}] Poissoni jaotus
+    \item \dots
+    \end{description}
+    \pause
+  \item Statistilised tabelid:
+    \begin{description}
+    \item[\code{r\dots}] juhuslike arvude generaator (\code{rnorm})
+    \item[\code{d\dots}] tõenäosustihedus (\code{dnorm})
+    \item[\code{p\dots}] kumulatiivne jaotusfunktsioon (\code{pnorm})
+    \item[\code{q\dots}] jaotuse kvantiilid (\code{qnorm})
+    \end{description}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Maximum likelihood}
+  ML tuleb teha nagu alati:
+  \begin{enumerate}
+  \item Kirjuta likelihoodi funktsioon
+  \item Maksimeeri parameetri järgi.
+  \end{enumerate}
+  Näide: genereerime normaaljaotusega juhuslikke arve ja leiame valimi
+  keskmise:
+  \begin{align}
+    \loglik_i(\mu, \sigma; x_i) 
+    &=
+    \log \left(
+      \frac{1}{\sqrt{2\pi}\sigma}
+      \exp \left(
+        - \frac{1}{2}
+        \frac{(x_i - \mu)^2}{\sigma^2}
+      \right)
+    \right) =
+    \\
+    &=
+    -\frac{1}{2} \log(2\pi)
+    - \log \sigma
+    - \frac{1}{2}
+    \frac{(x_i - \mu)^2}{\sigma^2}
+  \end{align}
+\end{frame}
+
+
+
+\section{Graafika}
+
+\begin{frame}
+  \frametitle{Graafika}
+  \begin{itemize}
+  \item Mõned näited
+  \item Lihtne rida: \code{plot(x)}
+  \item $x-y$ plot: \code{plot(x, y)}
+  \item Histogramm: \code{hist(x)}
+  \item Kernel tõenäosustihedus: \code{plot(density(x))}
+  \item Võrdle jaotuse kvantiile: \code{qqnorm()}
+  \item Funktsiooni kõver: \code{curve()}
+  \end{itemize}
+\end{frame}
+
+\end{document}

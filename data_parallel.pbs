@@ -1,0 +1,23 @@
+#!/bin/bash
+##
+#PBS -N data_parallel_example
+#PBS -l nodes=4:ppn=8,mem=12gb
+#PBS -l walltime=00:00:15:12
+
+## Put the output from jobs into the below directory
+#PBS -o /usr/lusers/otoomet/scratch/tmp
+## Put both the stderr and stdout into a single file
+#PBS -j oe
+## Specify the working directory for this job
+#PBS -d /usr/lusers/otoomet/scratch/tyyq/r_parallel/
+#PBS -m e
+
+## Disable regcache
+export MX_RCACHE=0
+## Load the appropriate environment module.
+module load r_3.2.0 # gcc_<version>-ompi_<version> 
+module load icc_14.0.3-ompi_1.8.3
+
+# Open MPI 1.8.x
+mpirun Rscript >>output.txt 2>&1 data_parallel4.R
+

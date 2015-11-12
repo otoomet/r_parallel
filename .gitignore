@@ -1,6 +1,8 @@
 # History files
 .Rhistory
 .Rapp.history
+.RData
+.Rprofile
 
 # Example code in package build process
 *-Ex.R
@@ -11,3 +13,11 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+
+*~
+*.aux
+*.log
+*.nav
+*.snm
+*.toc
+*.out
