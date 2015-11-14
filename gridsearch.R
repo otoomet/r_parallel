@@ -19,9 +19,13 @@ search1 <- function(mulim=c(-5,5),
                     sigmalim=c(0.001,5),
                     nGrid=100) {
    ## serial computations
+   ## Create a sequence of mu-s:
    mus <- seq(from=mulim[1], to=mulim[2], length=nGrid)
+   ## and a sequence of sigmas:
    sigmas <- seq(from=sigmalim[1], to=sigmalim[2], length=nGrid)
+   ## Make grid out of two sequences:
    grid <- as.matrix(expand.grid(mu=mus, sigma=sigmas))
+   ## and list all grid points
    points <- seq(length=nrow(grid))
    ##
    res <- lapply(points, function(i) loglik(grid[i,]))

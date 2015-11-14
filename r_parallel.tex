@@ -35,7 +35,8 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Results Table}
+  \frametitle{Your Task:}
+  Fill the results table
   \begin{tabular}{l cccc}
     \toprule
     task      & single thread & multicore & socket (localhost) & ... \\
@@ -74,6 +75,7 @@
 \begin{frame}
   \frametitle{Frontends}
   \begin{itemize}
+  \item just \code{R} (command line)
   \item R-Studio
   \item ESS (Emacs)
   \item \code{R CMD Batch}
@@ -105,13 +107,16 @@
   \item Example: 33 vs 75 seconds on my laptop (4 workers)
     \pause
   \item But it does not work on windows \frownie{}
+    \begin{itemize}
+    \item Works but does not increase speed
+    \end{itemize}
   \item \code{browser()} does not work
   \item Not load balancing
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Example 1}
+  \frametitle{Example Program}
   \begin{itemize}
   \item Embarrasingly parallel task
   \item Compute normal density of a long vector
@@ -258,6 +263,18 @@ Maximum -21427517 at mu = 0.5555556 and sigma = 2.222778
     hyak      &               &           & 244 \\
     \bottomrule
   \end{tabular}
+\end{frame}
+
+\begin{frame}
+  \frametitle{A Few Commands}
+  \begin{description}
+  \item[comm.rank()] id of the process (0 = master)
+  \item[comm.cat()] parallel-aware printing
+  \item[get.jid()] get job list
+  \item[task.pull()] parallel tasks (like \code{lapply()})
+  \item[bcast()] share a value among all workers
+  \item[gather()] pull values from all workers
+  \end{description}
 \end{frame}
 
 \section[HPC]{High-Performance Cluster}
